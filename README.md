@@ -83,7 +83,7 @@ python app.py
 
 ### Step 8: User Interface
 - Web interface menggunakan Flask + HTML + Tailwind CSS.
-- Input: User ID dan Top-N (slider 5–50).
+- Input: User ID dan Top-N.
 - Output: Tabel rekomendasi + metrik evaluasi.
 
 ---
