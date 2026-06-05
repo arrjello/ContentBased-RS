@@ -117,4 +117,3 @@ Konfigurasi dapat diubah di bagian atas `app.py`:
 - **Tidak** menghitung cosine similarity full matrix antar semua film (O(n²)).
 - Menggunakan pendekatan **user profile vector** sehingga hanya perlu menghitung similarity 1 vektor vs seluruh film (O(n)).
 - Mendukung **sampling rating** agar tetap responsif pada dataset besar (MovieLens 20M).
-- Kode dilengkapi **komentar jelas** di setiap tahap untuk kemudahan pemahaman.
