@@ -7,7 +7,7 @@ Dibangun dengan **Python**, **Flask**, dan **HTML/Tailwind CSS**.
 
 ## DATASET
 ```
-Harap mengunduh dataset https://www.kaggle.com/datasets/abdallahwagih/movies terlebih dahulu, simpan dataset movie.csv dan rating.csv pada folder project ini jangan semua
+Harap mengunduh dataset https://www.kaggle.com/datasets/grouplens/movielens-20m-dataset terlebih dahulu, simpan dataset movie.csv dan rating.csv pada folder project ini jangan semua
 ```
 ---
 ## Struktur Proyek
