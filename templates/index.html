@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>RecSys Pro | Content-Based Movie Recommendation Engine</title>
+    <meta name="description" content="Content-Based Movie Recommender System menggunakan TF-IDF dan Cosine Similarity">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#c6c6cd",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-container": "#2170e4",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f2f4f6",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "surface-dim": "#d8dadc",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-surface": "#191c1e",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-fixed": "#d3e4fe",
+                        "surface": "#f7f9fb",
+                        "outline": "#76777d",
+                        "on-surface-variant": "#45464d",
+                        "on-secondary-container": "#fefcff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#75859d",
+                        "secondary": "#0058be",
+                        "background": "#f7f9fb",
+                        "tertiary": "#000000",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#d8e2ff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container": "#eceef0",
+                        "primary-container": "#131b2e",
+                        "surface-bright": "#f7f9fb",
+                        "primary": "#000000",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#565e74",
+                        "inverse-primary": "#bec6e0",
+                        "surface-variant": "#e0e3e5"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        gutter: "24px",
+                        sm: "16px",
+                        lg: "40px",
+                        md: "24px",
+                        xl: "64px",
+                        base: "4px",
+                        xs: "8px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "48px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-md": ["JetBrains Mono"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "title-md": ["Hanken Grotesk"],
+                        "code-sm": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "title-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "code-sm": ["11px", { lineHeight: "14px", fontWeight: "400" }]
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen font-body-lg text-body-lg selection:bg-secondary-container/30">
+    <main class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-lg space-y-lg">
+
+        <header class="flex flex-col gap-xs">
+            <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Recommendation Engine</h1>
+            <p class="font-body-lg text-on-surface-variant opacity-80">Configure parameters to generate content-based
+                predictions.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+
+            <aside class="lg:col-span-4 space-y-md">
+
+                <section
+                    class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md soft-technical-shadow">
+                    <div class="flex items-center gap-xs mb-md border-b border-outline-variant pb-xs">
+                        <span class="material-symbols-outlined text-primary">settings_input_component</span>
+                        <h2 class="font-title-md text-title-md text-primary">Input Parameters</h2>
+                    </div>
+                    <div class="space-y-sm">
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant uppercase"
+                                for="user-id">User ID Reference</label>
+                            <input
+                                class="w-full bg-surface-container-low border border-outline-variant rounded p-xs focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all font-code-sm text-on-surface"
+                                id="user-id" placeholder="contoh: 1" type="number" min="1">
+                            <p class="text-[11px] text-outline font-label-md" id="user-hint">Loading available users...
+                            </p>
+                        </div>
+                        <div class="flex flex-col gap-xs pt-xs">
+                            <div class="flex justify-between items-center">
+                                <label class="font-label-md text-label-md text-on-surface-variant uppercase"
+                                    for="top-n">Top-N Recommendations</label>
+                                <span
+                                    class="font-label-md text-label-md text-primary bg-secondary-container/10 px-2 py-0.5 rounded"
+                                    id="top-n-value">15</span>
+                            </div>
+                            <input class="range-slider w-full appearance-none bg-transparent cursor-pointer" id="top-n"
+                                max="10000" min="5" value="15" type="range"
+                                oninput="document.getElementById('top-n-value').innerText = this.value">
+                            <div class="flex justify-between text-[10px] text-outline font-label-md">
+                                <span>5</span><span>10000</span>
+                            </div>
+                        </div>
+                        <button id="btn-generate"
+                            class="w-full mt-md bg-primary text-on-primary font-title-md text-body-lg py-sm rounded border border-primary hover:bg-on-surface-variant transition-all btn-press flex items-center justify-center gap-xs shadow-sm">
+                            <span class="material-symbols-outlined" id="btn-icon">bolt</span>
+                            <span id="btn-text">Generate Recommendation</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section
+                    class="bg-surface-container-low border border-outline-variant rounded-xl p-md soft-technical-shadow">
+                    <div class="flex items-center gap-xs mb-sm border-b border-outline-variant pb-xs">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <h2 class="font-title-md text-title-md text-primary">Deskripsi Sistem</h2>
+                    </div>
+                    <div class="space-y-sm">
+                        <p class="font-body-sm text-on-surface-variant leading-relaxed">
+                            Sistem rekomendasi film berbasis konten (<strong>Content-Based Recommender System</strong>)
+                            yang memanfaatkan informasi genre film untuk memberikan rekomendasi yang sesuai dengan
+                            preferensi pengguna.
+                        </p>
+                        <div class="space-y-xs text-[12px] text-on-surface-variant font-label-md">
+                            <div class="flex items-start gap-xs">
+                                <span
+                                    class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+                                <span>TF-IDF Vectorization pada genre</span>
+                            </div>
+                            <div class="flex items-start gap-xs">
+                                <span
+                                    class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+                                <span>User Profile dari rata-rata vektor film disukai</span>
+                            </div>
+                            <div class="flex items-start gap-xs">
+                                <span
+                                    class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+                                <span>Cosine Similarity untuk ranking</span>
+                            </div>
+                            <div class="flex items-start gap-xs">
+                                <span
+                                    class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+                                <span>Evaluasi: Precision@K &amp; Recall@K</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="user-info-card"
+                    class="hidden bg-surface-container-low border border-outline-variant rounded-xl p-md soft-technical-shadow animate-fade-in-up">
+                    <div class="flex items-center gap-xs mb-sm border-b border-outline-variant pb-xs">
+                        <span class="material-symbols-outlined text-primary">person</span>
+                        <h2 class="font-title-md text-title-md text-primary">User Profile Info</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-xs text-[12px]">
+                        <div class="bg-surface-container-highest/50 rounded p-xs text-center">
+                            <div class="font-label-md text-on-surface-variant uppercase">Train Ratings</div>
+                            <div class="font-title-md text-title-md text-primary" id="info-total-ratings">&mdash;</div>
+                        </div>
+                        <div class="bg-surface-container-highest/50 rounded p-xs text-center">
+                            <div class="font-label-md text-on-surface-variant uppercase">Liked (Train)</div>
+                            <div class="font-title-md text-title-md text-primary" id="info-liked-count">&mdash;</div>
+                        </div>
+                        <div class="bg-surface-container-highest/50 rounded p-xs text-center">
+                            <div class="font-label-md text-on-surface-variant uppercase">Test Ratings</div>
+                            <div class="font-title-md text-title-md text-primary" id="info-test-ratings">&mdash;</div>
+                        </div>
+                        <div class="bg-surface-container-highest/50 rounded p-xs text-center">
+                            <div class="font-label-md text-on-surface-variant uppercase">Liked (Test)</div>
+                            <div class="font-title-md text-title-md text-primary" id="info-test-liked">&mdash;</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="user-genres-card"
+                    class="hidden bg-surface-container-low border border-outline-variant rounded-xl p-md soft-technical-shadow animate-fade-in-up">
+                    <div class="flex items-center gap-xs mb-sm border-b border-outline-variant pb-xs">
+                        <span class="material-symbols-outlined text-primary">local_movies</span>
+                        <h2 class="font-title-md text-title-md text-primary">User Liked Genres</h2>
+                    </div>
+                    <div class="flex flex-wrap gap-2" id="user-genres-container">
+                    </div>
+                </section>
+            </aside>
+
+            <div class="lg:col-span-8 space-y-gutter">
+
+                <div class="grid grid-cols-2 gap-gutter">
+                    <div
+                        class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center soft-technical-shadow relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+                        <span
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-xs">Precision@K</span>
+                        <div class="font-display-lg text-display-lg text-primary" id="metric-precision"></div>
+                        <div class="flex items-center gap-1 mt-xs" id="precision-detail">
+                            <span class="font-label-md text-label-md text-outline" id="precision-sub">Awaiting
+                                input</span>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center soft-technical-shadow relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-secondary-fixed"></div>
+                        <span
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-xs">Recall@K</span>
+                        <div class="font-display-lg text-display-lg text-primary" id="metric-recall"></div>
+                        <div class="flex items-center gap-1 mt-xs" id="recall-detail">
+                            <span class="font-label-md text-label-md text-outline" id="recall-sub">Awaiting input</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="diagnostic-banner"
+                    class="hidden bg-surface-container-low border border-outline-variant rounded-xl px-md py-sm soft-technical-shadow animate-fade-in-up">
+                    <div class="flex items-start gap-xs">
+                        <span class="material-symbols-outlined text-[18px] mt-0.5" id="diagnostic-icon">info</span>
+                        <p class="font-body-sm text-on-surface-variant" id="diagnostic-text"></p>
+                    </div>
+                </div>
+
+                <section
+                    class="bg-surface-container-lowest border border-outline-variant rounded-xl soft-technical-shadow overflow-hidden">
+                    <div class="px-md py-sm border-b border-outline-variant flex justify-between items-center">
+                        <div class="flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-primary">format_list_bulleted</span>
+                            <h2 class="font-title-md text-title-md text-primary">Recommended Items</h2>
+                        </div>
+                        <span class="font-label-md text-label-md text-outline" id="result-count"></span>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse" id="results-table">
+                            <thead>
+                                <tr class="bg-surface-container-low border-b border-outline-variant">
+                                    <th
+                                        class="px-md py-xs font-label-md text-label-md text-on-surface-variant uppercase w-[60px]">
+                                        #</th>
+                                    <th
+                                        class="px-md py-xs font-label-md text-label-md text-on-surface-variant uppercase">
+                                        Movie ID</th>
+                                    <th
+                                        class="px-md py-xs font-label-md text-label-md text-on-surface-variant uppercase">
+                                        Title</th>
+                                    <th
+                                        class="px-md py-xs font-label-md text-label-md text-on-surface-variant uppercase">
+                                        Genres</th>
+                                    <th
+                                        class="px-md py-xs font-label-md text-label-md text-on-surface-variant uppercase text-right">
+                                        Similarity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-body" class="divide-y divide-outline-variant/30">
+                                <tr>
+                                    <td colspan="5" class="px-md py-xl text-center text-on-surface-variant opacity-60">
+                                        <div class="flex flex-col items-center gap-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[40px] opacity-30">movie_filter</span>
+                                            <span class="font-body-sm">Enter a User ID and click Generate to see
+                                                recommendations.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="show-more-container" class="hidden border-t border-outline-variant px-md py-sm text-center">
+                        <button id="btn-show-more"
+                            class="w-full bg-surface-container-low border border-outline-variant text-primary font-title-md text-body-lg py-sm rounded hover:bg-surface-container transition-all flex items-center justify-center gap-xs">
+                            <span class="material-symbols-outlined" id="show-more-icon">expand_more</span>
+                            <span id="show-more-text">Lihat Selengkapnya</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-2"></div>
+
+    <script>
+        const btnGenerate = document.getElementById("btn-generate");
+        const btnIcon = document.getElementById("btn-icon");
+        const btnText = document.getElementById("btn-text");
+        const inputUserId = document.getElementById("user-id");
+        const inputTopN = document.getElementById("top-n");
+        const resultsBody = document.getElementById("results-body");
+        const resultCount = document.getElementById("result-count");
+        const metricPrec = document.getElementById("metric-precision");
+        const metricRecall = document.getElementById("metric-recall");
+        const precSub = document.getElementById("precision-sub");
+        const recallSub = document.getElementById("recall-sub");
+        const userInfoCard = document.getElementById("user-info-card");
+        const userHint = document.getElementById("user-hint");
+        const btnShowMore = document.getElementById("btn-show-more");
+        const showMoreContainer = document.getElementById("show-more-container");
+        const showMoreIcon = document.getElementById("show-more-icon");
+        const showMoreText = document.getElementById("show-more-text");
+        const userGenresCard = document.getElementById("user-genres-card");
+        const userGenresContainer = document.getElementById("user-genres-container");
+
+        let allRecommendations = [];
+        let displayedCount = 10;
+
+        // Load sample user IDs on page load
+        fetch("/users")
+            .then(r => r.json())
+            .then(data => {
+                const ids = data.sample_users.slice(0, 10).join(", ");
+                userHint.textContent = `Sample IDs: ${ids} … (${data.total_users.toLocaleString()} users available)`;
+            })
+            .catch(() => {
+                userHint.textContent = "Could not load user list.";
+            });
+
+        // Generate Recommendations
+        btnGenerate.addEventListener("click", async () => {
+            const userId = parseInt(inputUserId.value);
+            const topN = parseInt(inputTopN.value);
+
+            if (!userId || userId < 1) {
+                showToast("Please enter a valid User ID.", "error");
+                inputUserId.focus();
+                return;
+            }
+            setLoading(true);
+
+            try {
+                const response = await fetch("/recommend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId, top_n: topN })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showToast(data.message, "error");
+                    setLoading(false);
+                    return;
+                }
+
+                renderMetrics(data.metrics);
+                renderTable(data.recommendations);
+                renderUserInfo(data.user_info);
+                showToast(`Generated ${data.recommendations.length} recommendations for User ${userId}.`, "success");
+
+            } catch (err) {
+                showToast("Server error. Is the Flask server running?", "error");
+                console.error(err);
+            }
+
+            setLoading(false);
+        });
+
+        inputUserId.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") btnGenerate.click();
+        });
+
+        // Show More Handler
+        btnShowMore.addEventListener("click", () => {
+            const nextCount = Math.min(displayedCount + 10, allRecommendations.length);
+            const itemsToShow = allRecommendations.slice(0, nextCount);
+
+            resultsBody.innerHTML = itemsToShow.map((rec, i) => `
+        <tr class="hover:bg-surface-container-low transition-colors result-row" style="animation-delay: ${i * 40}ms">
+            <td class="px-md py-sm font-code-sm text-on-surface-variant">${i + 1}</td>
+            <td class="px-md py-sm font-code-sm text-on-surface-variant">${rec.movieId}</td>
+            <td class="px-md py-sm font-body-lg font-medium text-primary">${escapeHtml(rec.title)}</td>
+            <td class="px-md py-sm">
+                <div class="flex flex-wrap gap-1">
+                    ${rec.genres.map(g => `<span class="genre-badge bg-secondary-container/10 text-secondary px-2 py-0.5 rounded-full font-label-md text-[10px]">${escapeHtml(g)}</span>`).join("")}
+                </div>
+            </td>
+            <td class="px-md py-sm text-right font-code-sm font-bold text-secondary">${rec.similarity_score.toFixed(4)}</td>
+        </tr>
+    `).join("");
+
+            displayedCount = nextCount;
+
+            // Hide button if all items are displayed
+            if (displayedCount >= allRecommendations.length) {
+                showMoreContainer.classList.add("hidden");
+            } else {
+                const remainingCount = allRecommendations.length - displayedCount;
+                showMoreText.textContent = `Lihat Selengkapnya (${remainingCount} lagi)`;
+            }
+        });
+
+        // Render Functions
+        function renderMetrics(metrics) {
+            metricPrec.textContent = metrics.precision_at_k.toFixed(4);
+            metricRecall.textContent = metrics.recall_at_k.toFixed(4);
+            precSub.textContent = `${metrics.relevant_count} relevant in top-${metrics.k}`;
+            recallSub.textContent = `${metrics.relevant_count} of ${metrics.total_relevant} relevant found`;
+
+            const banner = document.getElementById("diagnostic-banner");
+            const diagText = document.getElementById("diagnostic-text");
+            const diagIcon = document.getElementById("diagnostic-icon");
+            banner.classList.remove("hidden");
+            diagText.textContent = metrics.diagnostic;
+
+            if (metrics.total_relevant === 0) {
+                diagIcon.textContent = "warning";
+                diagIcon.className = "material-symbols-outlined text-[18px] mt-0.5 text-[#d97706]";
+            } else if (metrics.relevant_count === 0) {
+                diagIcon.textContent = "info";
+                diagIcon.className = "material-symbols-outlined text-[18px] mt-0.5 text-secondary";
+            } else {
+                diagIcon.textContent = "check_circle";
+                diagIcon.className = "material-symbols-outlined text-[18px] mt-0.5 text-[#059669]";
+            }
+        }
+
+        function renderTable(recommendations) {
+            allRecommendations = recommendations;
+            displayedCount = 10;
+            resultCount.textContent = `${recommendations.length} items`;
+
+            if (recommendations.length === 0) {
+                resultsBody.innerHTML = `
+            <tr><td colspan="5" class="px-md py-xl text-center text-on-surface-variant opacity-60">
+                <span class="font-body-sm">No recommendations found for this user.</span>
+            </td></tr>`;
+                showMoreContainer.classList.add("hidden");
+                return;
+            }
+
+            const itemsToDisplay = recommendations.slice(0, 10);
+            resultsBody.innerHTML = itemsToDisplay.map((rec, i) => `
+        <tr class="hover:bg-surface-container-low transition-colors result-row" style="animation-delay: ${i * 40}ms">
+            <td class="px-md py-sm font-code-sm text-on-surface-variant">${i + 1}</td>
+            <td class="px-md py-sm font-code-sm text-on-surface-variant">${rec.movieId}</td>
+            <td class="px-md py-sm font-body-lg font-medium text-primary">${escapeHtml(rec.title)}</td>
+            <td class="px-md py-sm">
+                <div class="flex flex-wrap gap-1">
+                    ${rec.genres.map(g => `<span class="genre-badge bg-secondary-container/10 text-secondary px-2 py-0.5 rounded-full font-label-md text-[10px]">${escapeHtml(g)}</span>`).join("")}
+                </div>
+            </td>
+            <td class="px-md py-sm text-right font-code-sm font-bold text-secondary">${rec.similarity_score.toFixed(4)}</td>
+        </tr>
+    `).join("");
+
+            if (recommendations.length > 10) {
+                showMoreContainer.classList.remove("hidden");
+                const remainingCount = recommendations.length - 10;
+                showMoreText.textContent = `Lihat Selengkapnya (${remainingCount} lagi)`;
+            } else {
+                showMoreContainer.classList.add("hidden");
+            }
+        }
+
+        function renderUserInfo(info) {
+            userInfoCard.classList.remove("hidden");
+            document.getElementById("info-total-ratings").textContent = info.total_ratings_train;
+            document.getElementById("info-liked-count").textContent = info.liked_movies_count;
+            document.getElementById("info-test-ratings").textContent = info.total_ratings_test;
+            document.getElementById("info-test-liked").textContent = info.liked_movies_test;
+
+            if (info.liked_genres && info.liked_genres.length > 0) {
+                userGenresCard.classList.remove("hidden");
+                userGenresContainer.innerHTML = info.liked_genres.map(genre => 
+                    `<span class="genre-badge bg-secondary-container/10 text-secondary px-3 py-1.5 rounded-full font-label-md text-[12px]">${escapeHtml(genre)}</span>`
+                ).join("");
+            } else {
+                userGenresCard.classList.add("hidden");
+            }
+        }
+
+        // UI Helpers
+        function setLoading(loading) {
+            btnGenerate.disabled = loading;
+            if (loading) {
+                btnIcon.textContent = "sync";
+                btnIcon.classList.add("animate-spin");
+                btnText.textContent = "Processing...";
+                btnGenerate.classList.add("opacity-70");
+            } else {
+                btnIcon.textContent = "bolt";
+                btnIcon.classList.remove("animate-spin");
+                btnText.textContent = "Generate Recommendation";
+                btnGenerate.classList.remove("opacity-70");
+            }
+        }
+
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toast-container");
+            const colors = {
+                success: "bg-[#059669] text-white",
+                error: "bg-error text-on-error",
+                info: "bg-inverse-surface text-inverse-on-surface"
+            };
+            const icons = { success: "check_circle", error: "error", info: "info" };
+
+            const toast = document.createElement("div");
+            toast.className = `flex items-center gap-xs px-md py-sm rounded-xl shadow-lg ${colors[type] || colors.info} toast-enter font-body-sm max-w-sm`;
+            toast.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icons[type] || icons.info}</span><span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove("toast-enter");
+                toast.classList.add("toast-exit");
+                toast.addEventListener("animationend", () => toast.remove());
+            }, 4000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>
