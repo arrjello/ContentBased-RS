@@ -6,9 +6,9 @@ Dibangun dengan **Python**, **Flask**, dan **HTML/Tailwind CSS**.
 
 
 ## DATASET
----
+```
 Harap mengunduh dataset https://www.kaggle.com/datasets/abdallahwagih/movies terlebih dahulu
----
+```
 ## Struktur Proyek
 
 ```
