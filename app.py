@@ -9,7 +9,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 
 app = Flask(__name__)
-# Bisa diubah sesuai data yang dibutuhkan
+#ubah disini kalau mau pakai sample size yang berbeda, defaultnya 20 juta (semua data)
 RATING_SAMPLE_SIZE = 20_000_263
 
 # Threshold rating: film dianggap "disukai" jika rating >= LIKE_THRESHOLD
@@ -336,7 +336,6 @@ def recommend():
         (test_df["userId"] == user_id) & (test_df["rating"] >= LIKE_THRESHOLD)
     ]))
     
-    # Extract liked genres
     liked_genres_str = movies_df[movies_df["movieId"].isin(liked_movie_ids)]["genres"].tolist()
     all_liked_genres = set()
     for genres_str in liked_genres_str:
@@ -364,18 +363,14 @@ def recommend():
 
 @app.route("/users", methods=["GET"])
 def get_users():
-    # Cari user yang punya liked movies di TRAIN (untuk profil)
     train_liked = train_df[train_df["rating"] >= LIKE_THRESHOLD]
     users_train_liked = set(train_liked["userId"].unique())
 
-    # Cari user yang punya liked movies di TEST (untuk evaluasi)
     test_liked = test_df[test_df["rating"] >= LIKE_THRESHOLD]
     users_test_liked = set(test_liked["userId"].unique())
 
-    # User yang evaluable: punya liked di train DAN test
     evaluable_users = sorted(users_train_liked.intersection(users_test_liked))
 
-    # Ambil user dengan banyak test liked items agar metrik lebih meaningful
     test_liked_counts = test_liked.groupby("userId").size()
     top_evaluable = test_liked_counts[test_liked_counts.index.isin(evaluable_users)]
     top_evaluable = top_evaluable.sort_values(ascending=False)
